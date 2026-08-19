@@ -28,18 +28,13 @@ This specification defines an API for the issuance and management of Verifiable 
 
 # Introduction {#introduction}
 
-This specification defines a set of APIs and a protocol for credential issuance and lifecycle management. It
-is credential format agnostic so Credentials can be of any format. Credentials can be of any format including,
-but not limited to, IETF SD-JWT VC [@I-D.ietf-oauth-sd-jwt-vc], ISO mdoc
-[@ISO.18013-5], and W3C VCDM [@VC_DATA_2.0].
+Digital wallets enable individuals to request, receive, store, and present verifiable digital credentials while maintaining privacy and control over their data. By keeping sensitive user data strictly on the Wallet Client Instance, wallets minimize exposure and enforce data minimization principles.
 
-It is intended to be used to allow a Wallet to provide server infrastructure to
-facilitate improved reliability and security of credential issuance and
-lifecycle management, while adhering to principles of data minimization and user
-privacy.
+However, relying entirely on a client-side architecture presents challenges. Client applications operate in less trusted environments, have intermittent connectivity, limit computational performance, and are difficult to reliably update. To overcome these limitations, Wallet Providers frequently introduce a Wallet Server to handle resource-intensive tasks, coordinate lifecycle management, provide stronger security controls, and improve overall reliability.
 
-The communication between the Wallet Server and the Wallet Client is out of
-scope of this specification.
+The goal of this specification is to allow Wallet Providers to utilize Wallet Servers without compromising the core privacy principles of a digital wallet. To achieve this, the specification introduces a protocol where the Wallet Server and Issuer Server coordinate issuance and lifecycle management, while sensitive data is protected via an end-to-end authenticated and encrypted channel directly between the Wallet Client Instance and the Issuer Server.
+
+This specification is credential format agnostic and supports formats such as IETF SD-JWT VC [@I-D.ietf-oauth-sd-jwt-vc], ISO mdoc [@ISO.18013-5], and W3C VCDM [@VC_DATA_2.0]. Communication between the Wallet Server and the Wallet Client Instance is out of scope.
 
 # Requirements Notation and Conventions {#requirements-notation}
 
@@ -99,14 +94,11 @@ Wallet Signing Key (WSK):
 
 # Overview  {#overview}
 
-This specification defines endpoints on both the Wallet Server and Credential
-Issuer Server to perform credential issuance and lifecycle management. This
-specification is designed for use with an architecture involving 3 components:
+This specification defines a set of APIs between a Wallet Server and an Issuer Server. It is designed for an architecture involving three primary components:
 
-- An Issuer Server operated by the Issuer
-- A Wallet Server operated by the Wallet Provider
-- A Wallet Client provided by the Wallet Provider and under the control of the
-  Credential Holder.
+- An **Issuer Server** operated by the Issuer.
+- A **Wallet Server** operated by the Wallet Provider.
+- A **Wallet Client Instance** under the control of the Holder.
 
 ~~~ ascii-art
       +-------------------------------------------+
@@ -116,55 +108,61 @@ specification is designed for use with an architecture involving 3 components:
       |  |             |         |             |  |            |               |
       |  |   Wallet    |         |   Wallet    |  |            | +-----------+ |
       |  |   Client    |<------->|   Server    |<--------------->|  Issuer   | |
-      |  |             |  Out of |             |  | OpenID4VCI | |  Server   | |
+      |  |  Instance   |  Out of |             |  | OpenID4VCI | |  Server   | |
       |  +-------------+  Scope  +-------------+  |  S2S API   | +-----------+ |
       |                                           |            |               |
       +-------------------------------------------+            +---------------+
 ~~~
 {: #architecture-diagram title="Architecture Overview"}
 
-The goal of this protocol is to enable a Wallet Server to improve the reliability, security and management of Credentials issued to the Holder while using application-layer encryption and wallet client authentication to minimize the sensitive user data unnecessarily exposed to the Wallet Server. Due to their distributed nature, Client applications are notoriously difficult to update, have poor connectivity, slower analytics and are a less trusted environment. An Issuer Server could work around these issues, but as the provider of both the Client and the Server, the Wallet Provider can be in a better position to alleviate these problems.
+Prior to executing the issuance phases, the Wallet Server and Issuer Server mutually authenticate via mTLS. The Wallet Server is responsible for authenticating the Wallet Client Instance before forwarding its requests.
 
-At a high level the protocol works as follows: 
+The protocol comprises three distinct phases: Verification, Issuance, and Lifecycle Management.
 
-In advance of any communication, the Wallet Server and Issuer Server authenticate via mTLS, which is used at all endpoints. The Wallet Server is responsible for authenticating the Wallet Client and ensuring it is in a good state before communicating with the Issuer Server. 
+## Verification Phase
 
-Issuance begins with a Verification phase. This phase serves two purposes: 
+**Purpose:** To authenticate the Holder, authorize the Wallet Client Instance, and establish a Wallet Signing Key (WSK) bound to the session.
 
- - Establishing a Wallet Signing Key (WSK) with the Issuer that is under control of the Holder of the Wallet Client Instance.
- - Authenticate the Holder of the Wallet Client Instance to the Issuer, and determine what Credential Datasets it is authorized to have issued to it.
+**State Before:** The Issuer Server has no knowledge of the Wallet Client Instance or its authorization to receive credentials.
 
-This is done as follows: 
+**State After:** The Issuer Server has verified the Holder's identity, established a trusted WSK for the Wallet Client Instance, and authorized specific Credential Datasets for issuance.
 
-1. The Wallet Client Instance generates a WSK, and the Wallet Server initiates the Verification on the Issuer Server.
-  1. The Wallet provides Credential Configuration(s) to identify the type of credentials they wish issued.
-  1. The Wallet provides a stable unique Session Id associated with the WSK and the Issuer provides a stable Verification Id to reference this session.
-1. The Wallet Client Instance collects Verification Data and signs-then-encrypts it using the WSK and the Issuer Encryption Key.
-  1. Examples include digital credential presentations, auth on web, wallet collected documents and liveness/selfie checks. 
-1. The Wallet Server calls The Issuer Server, passing Wallet Client-supplied Verification Data and, optionally, providing additional Wallet Server-supplied Verification Data.
-  1. As an optimization, Verification Data can be provided in the initial call.
-  1. Examples include risk and fraud signals or server collected verification data and evaluations. 
-1. The Issuer Server decrypts and verifies the Verification Data using the WSK, and evaluates it along with any Wallet Server provided Verification Data. 
-  1. The Issuer can perform the evaluation asynchronously to support evaluations that are not immediate (such as human reviews). 
-  1. The Issuer Server can optionally repeat this process to trigger the collection of additional Verification.
-1. After reaching a verdict the Issuer Server updates the verification status and notifies the Wallet Server of the change.
+**Process:**
+1. **Initiation:** The Wallet Client Instance generates a WSK. The Wallet Server initiates a session with the Issuer Server, providing a unique `SessionId` and specifying the requested Credential Configurations.
+2. **Data Collection:** The Wallet Client Instance collects Verification Data (e.g., identity document scans, liveness checks, or existing digital credentials), signs it with the WSK, and encrypts it using the Issuer's public key.
+3. **Submission and Evaluation:** The Wallet Server submits the encrypted Verification Data to the Issuer Server. It may append its own server-side signals, such as fraud assessments or risk scores. The Issuer Server decrypts the payload, verifies the WSK signature, and evaluates the data to reach an issuance verdict. This evaluation may be asynchronous.
 
-On successful completion the Issuer Server now has a WSK that can be used to authenticate payloads as originating on a particular Wallet Client Instance, and have authenticated the Holder. 
+For detailed endpoint definitions, refer to [Verification](#verification-endpoints).
 
-The Wallet retrieves the credentials as follows:
+## Issuance Phase
 
-1. The Wallet Server retrieves the Credential Instance Identifiers from the Wallet Server using the Session Id and Verification Id. 
-1. The Wallet Client generates proofs for Presentation Keys and signs-then-encrypts them using the WSK and the Issuer encryption key. The Wallet Client also creates an encryption key and signs it with the WSK. 
-1. The Wallet Server retrieves a batch of Credentials using the Credential Instance Identifiers and the client payload. 
-  1. The Credentials can be retrieved asynchronously by the Issuer Server returning a PENDING state. 
-1. The Issuer verifies the keys originated on the correct client using the WSK, validates the proofs and creates the Credentials. The Credentials are encrypted using the Wallet Encryption Key before being sent back to the Wallet.
-  1. Credential Metadata, such as display can optionally be returned as well.
+**Purpose:** To securely deliver the requested Verifiable Digital Credentials to the Wallet Client Instance.
 
-This process is repeated to refresh the Credentials and to update them. Post initial issuance, Credentials lifecycle can be managed through the following processes:
+**State Before:** The Wallet Client Instance is authorized to receive credentials but lacks the actual Credential Datasets.
 
-- The Issuer Server and the Wallet Server can initiate changes to the state of the Credential Instance by suspending, resuming or unlinking it. 
-- The current Credential Status can be bi-directionally queried from the Wallet  and Issuer Servers, to allow reconciliation of diverging states.
-- The Issuer Server and Wallet Server support bi-directional notification channels to prompt actions such as updates and retrievals. 
+**State After:** The Wallet Client Instance possesses the encrypted Verifiable Digital Credentials, bound to its Presentation Keys.
+
+**Process:**
+1. **Request:** The Wallet Server requests the authorized Credential Instance Identifiers from the Issuer Server.
+2. **Proof Generation:** The Wallet Client Instance generates proofs of possession for its Presentation Keys. It signs and encrypts these proofs using the WSK and Issuer encryption key, alongside a newly generated Wallet Encryption Key (WEK).
+3. **Fulfillment:** The Wallet Server submits the encrypted proofs to retrieve the credentials. The Issuer Server verifies the proofs using the established WSK, generates the credentials, and encrypts them using the WEK before returning them to the Wallet Server.
+
+For detailed endpoint definitions, refer to [Issuance](#credential-endpoints).
+
+## Lifecycle Management Phase
+
+**Purpose:** To manage the ongoing state of issued credentials over time.
+
+**State Before:** Credentials reside on the Wallet Client Instance and are assumed valid.
+
+**State After:** Credential states are synchronized between the Issuer Server and Wallet Client Instance, reflecting any updates, suspensions, or revocations.
+
+**Process:**
+- **State Changes:** Either server can initiate status changes (e.g., suspend, resume, or unlink) for a Credential Instance.
+- **Reconciliation:** Status endpoints allow bi-directional querying to reconcile diverging states between the Wallet and Issuer.
+- **Notifications:** Bi-directional notification channels prompt required actions, such as refreshing a credential dataset or fetching an updated schema.
+
+For detailed endpoint definitions, refer to [Lifecycle Management](#lifecycle-endpoints). 
 
 # Endpoints {#endpoints}
 
