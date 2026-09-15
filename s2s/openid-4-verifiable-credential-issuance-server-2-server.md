@@ -363,7 +363,7 @@ The Wallet Server provides a long-lived SessionId to associate with the WalletSi
 
 #### Replay Protection
 
-This endpoint is protected against replay attacks through a signed nonce mechanism. The wallet produces a digital signature over the session_id using the wallet_signing_key and includes this signature as the verification_nonce field in the request.
+This endpoint is protected against replay attacks through a signed nonce mechanism. The wallet produces a digital signature over the Session Id using the Wallet Signing Key and includes this signature as the `verification_nonce` field in the request.
 
 Issuers MUST perform the following verification steps:
 
@@ -371,7 +371,7 @@ Issuers MUST perform the following verification steps:
 - Confirm the signed value matches the `session_id` in the request
 - Confirm the `session_id` value has not been previously consumed
 
-Because each Session Id is a unique UUID generated per verification session, a replayed request will be rejected — either the session_id was already consumed, or a different session_id will not match the original signature. Replay from a different device is also prevented, as only the holder of the private Wallet Signing Key can produce a valid signature.
+Because each Session Id is a unique UUID generated per verification session, a replayed request will be rejected — either the Session Id was already consumed, or a different Session Id will not match the original signature. Replay from a different device is also prevented, as only the holder of the private Wallet Signing Key can produce a valid signature.
 
 #### Request Body Schema:
 
