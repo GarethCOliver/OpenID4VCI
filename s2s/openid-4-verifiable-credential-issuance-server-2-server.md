@@ -484,7 +484,7 @@ Additional fields are specified based on the VerificationStatus. The following V
 
 | Status                     | Description                                 | Next Step                                                                        |
 |----------------------------|---------------------------------------------|----------------------------------------------------------------------------------|
-| "APPROVED"                 | Verification Passed                         | Wallet Server calls `/credential/provision` to fetch the credential_instance_ids   |
+| "APPROVED"                 | Verification Passed                         | Wallet Server calls `/credential/provision` to fetch the Credential Instance Ids |
 | "REJECTED"                 | Most recent Verification Data was rejected. | Wallet re-collects Verification Data and re-submit or cancel the verification    |
 | "DENIED"                   | Verification Failed                         | Flow ends                                                                        |
 | "ADDITIONAL_INFO_REQUIRED" | Issuer requires more Verification Data      | Wallet Server calls `verification/supplement` with additional Verification Data. |
