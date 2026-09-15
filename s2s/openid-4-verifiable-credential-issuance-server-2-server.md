@@ -277,7 +277,7 @@ All keys are communicated between the Wallet and Issuer using this common key st
 | purpose           | string         | **OPTIONAL**: Human-readable purpose of the key.                                                             |
 | extensions        | object         | **OPTIONAL**: Implementation-specific extension fields.                                                      |
 
-The client_public_key MUST include the `alg` identifier and is RECOMMENDED to include a `kid`.
+The `client_public_key` JWK MUST include the `alg` identifier and is RECOMMENDED to include a `kid`.
 
 This specification defines two key types:
 
@@ -367,11 +367,11 @@ This endpoint is protected against replay attacks through a signed nonce mechani
 
 Issuers MUST perform the following verification steps:
 
-- Verify the verification_nonce signature against the wallet_signing_key included in the same request
-- Confirm the signed value matches the session_id in the request
-- Confirm the session_id has not been previously consumed
+- Verify the `verification_nonce` signature using the Wallet Signing Key included in the same request
+- Confirm the signed value matches the `session_id` in the request
+- Confirm the `session_id` value has not been previously consumed
 
-Because each session_id is a unique UUID generated per verification session, a replayed request will be rejected — either the session_id was already consumed, or a different session_id will not match the original signature. Replay from a different device is also prevented, as only the holder of the private wallet_signing_key can produce a valid signature.
+Because each Session Id is a unique UUID generated per verification session, a replayed request will be rejected — either the session_id was already consumed, or a different session_id will not match the original signature. Replay from a different device is also prevented, as only the holder of the private Wallet Signing Key can produce a valid signature.
 
 #### Request Body Schema:
 
