@@ -225,7 +225,7 @@ Error responses use content type application/problem+json and MAY include:
 | detail    | string   | Human-readable explanation specific to this occurrence                                       |
 | instance  | URI      | URI identifying this specific error occurrence (for support/debugging)                       |
 
-Implementations MAY extend the Problem Details object with additional fields (e.g., error_code for machine-readable application codes, retryable flag, validation_errors array for field-level issues). See Section 3.1 of [@!RFC9457] for more information.
+Implementations MAY extend the Problem Details object with additional fields (e.g., `error_code` for machine-readable application codes, retryable flag, `validation_errors` array for field-level issues). See Section 3.1 of [@!RFC9457] for more information.
 
 ### Error Types
 
