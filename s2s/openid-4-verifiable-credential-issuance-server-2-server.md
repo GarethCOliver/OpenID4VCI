@@ -406,12 +406,12 @@ This is used to provide Verification Data for an ongoing Verification.
 
 #### Request Body Schema
 
-| **Field**               | **Type**                          | **Description**                                                           |
-| ----------------------- | --------------------------------- | ------------------------------------------------------------------------- |
-| session_id               | string(UUID)                      | **REQUIRED**: Wallet-Generated id received in the `initiate` call.        |
-| verification_id          | string(UUID)                      | **REQUIRED**: Issuer-generated id for the current verification session.   |
-| verification_data_payload | Object (VerificationDataResponse) | **REQUIRED**: Containing verification data for this verification session. |
-| extensions              | Object                            | **OPTIONAL**: Implementation-specific extension fields.                   |
+| **Field**         | **Type**                          | **Description**                                                           |
+| ----------------- | --------------------------------- | ------------------------------------------------------------------------- |
+| session_id        | string(UUID)                      | **REQUIRED**: Wallet-Generated id received in the `initiate` call.        |
+| verification_id   | string(UUID)                      | **REQUIRED**: Issuer-generated id for the current verification session.   |
+| verification_data | Object (VerificationDataResponse) | **REQUIRED**: Containing verification data for this verification session. |
+| extensions        | Object                            | **OPTIONAL**: Implementation-specific extension fields.                   |
 
 #### Response Body Schema
 
@@ -629,15 +629,15 @@ This endpoint is used to retrieve the verifiable credentials for a specific cred
 
 #### Request Body Schema
 
-| **Field**                        | **Type**                        | **Description**                                                                               |
-| -------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
-| session_id                        | string                          | **REQUIRED**: Identifier for the overarching Session.                                         |
-| credential_instance_id             | string                          | **REQUIRED**: Credential Identifier.                                                          |
-| reason                           | string                          | **REQUIRED.**: Reason for the Wallet initiating the credential fetch, for debugging purposes. |
-| wallet_encryption_key              | object (KeyData)                | **REQUIRED**: Key provided for the Issuer to encrypt sensitive data to.                       |
-| client_encrypted_data              | object (ClientEncryptedPayload) | **OPTIONAL**: Payload containing an object containing an array of presentment_keys.            |
+| **Field**                           | **Type**                        | **Description**                                                                               |
+| ----------------------------------- | ------------------------------- | --------------------------------------------------------------------------------------------- |
+| session_id                          | string                          | **REQUIRED**: Identifier for the overarching Session.                                         |
+| credential_instance_id              | string                          | **REQUIRED**: Credential Identifier.                                                          |
+| reason                              | string                          | **REQUIRED.**: Reason for the Wallet initiating the credential fetch, for debugging purposes. |
+| wallet_encryption_key               | object (KeyData)                | **REQUIRED**: Key provided for the Issuer to encrypt sensitive data to.                       |
+| client_encrypted_payload            | object (ClientEncryptedPayload) | **OPTIONAL**: Payload containing an object containing an array of presentment_keys.           |
 | current_credential_metadata_version | string                          | **OPTIONAL**: Current Version identifier for the credential metadata.                         |
-| extensions                       | object                          | **OPTIONAL**: Implementation-specific extension fields.                                       |
+| extensions                          | object                          | **OPTIONAL**: Implementation-specific extension fields.                                       |
 
 #### Response Body Schema
 
